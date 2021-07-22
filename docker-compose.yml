@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+
+  postgres:
+    image: postgres:11
+    container_name: postgresql_jasperserver
+    # Uncomment if you want access to DB access from Host
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=jasper
+      - POSTGRES_USER=jasper_admin
+      - POSTGRES_PASSWORD=jasper_pwd
+    volumes:
+      - ./datadir:/var/lib/postgresql/data"
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
+
+  jasperserver:
+    image: retriever/jasperserver:7.2.0
+    container_name: jasperserver
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_TYPE=postgresql
+      - DB_HOST=postgresql_jasperserver
+      - DB_PORT=5432
+      - DB_USER=jasper_admin
+      - DB_PASSWORD=jasper_pwd
+    volumes:
+      # Relative path on the host/volume on container
+      - ./jasperserver-import:/jasperserver-import
+    depends_on:
+      - mysql
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 120s
